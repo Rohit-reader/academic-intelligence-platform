@@ -43,12 +43,8 @@ export const DashboardLayout = () => {
     <div className="flex h-screen bg-[#F8FAFC] text-[#0F172A] overflow-hidden font-sans">
       {/* Sidebar Desktop */}
       <aside className="hidden md:flex flex-col w-64 bg-white border-r border-[#E2E8F0]">
-        <div className="p-4 border-b border-[#E2E8F0] flex items-center gap-3">
-          <img src="/kec-logo.png" alt="KEC Logo" className="h-10 w-auto object-contain shrink-0" />
-          <div>
-            <h1 className="font-extrabold text-[#0F172A] tracking-tight text-sm">KEC</h1>
-            <p className="text-[10px] text-[#4F46E5] font-bold tracking-wide uppercase">Kongu Engineering</p>
-          </div>
+        <div className="p-4 border-b border-[#E2E8F0] flex items-center justify-center">
+          <img src="/kec-logo.png" alt="KEC Logo" className="h-12 w-auto object-contain" />
         </div>
 
         <nav className="flex-1 p-3.5 space-y-1 overflow-y-auto">
