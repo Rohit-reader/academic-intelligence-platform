@@ -11,6 +11,7 @@ import { DigitalTwin } from './pages/DigitalTwin';
 import { Examinations } from './pages/Examinations';
 import { Events } from './pages/Events';
 import { Security } from './pages/Security';
+import { RolesPermissions } from './pages/RolesPermissions';
 
 const ProtectedRoute = ({ children, roles }) => {
   const { user, loading } = useAuth();
@@ -70,6 +71,14 @@ export default function App() {
               element={
                 <ProtectedRoute roles={['ADMIN']}>
                   <Security />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/roles-permissions"
+              element={
+                <ProtectedRoute roles={['ADMIN']}>
+                  <RolesPermissions />
                 </ProtectedRoute>
               }
             />

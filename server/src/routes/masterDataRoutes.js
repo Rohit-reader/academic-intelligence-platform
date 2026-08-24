@@ -10,64 +10,64 @@ const {
   getLaboratories, createLaboratory, updateLaboratory, deleteLaboratory,
 } = require('../controllers/masterDataController');
 const { protect } = require('../middleware/auth');
-const { authorize } = require('../middleware/rbac');
+const { requirePermission, requireDepartmentScope } = require('../middleware/permissions');
 
 router.use(protect);
 
 // Departments
 router.route('/departments')
   .get(getDepartments)
-  .post(authorize('ADMIN'), createDepartment);
+  .post(requirePermission('departments:manage'), createDepartment);
 router.route('/departments/:id')
-  .put(authorize('ADMIN'), updateDepartment)
-  .delete(authorize('ADMIN'), deleteDepartment);
+  .put(requirePermission('departments:manage'), updateDepartment)
+  .delete(requirePermission('departments:manage'), deleteDepartment);
 
 // Faculty
 router.route('/faculty')
-  .get(getFaculty)
-  .post(authorize('ADMIN'), createFaculty);
+  .get(requireDepartmentScope(), getFaculty)
+  .post(requirePermission('faculty:manage'), createFaculty);
 router.route('/faculty/:id')
-  .put(authorize('ADMIN'), updateFaculty)
-  .delete(authorize('ADMIN'), deleteFaculty);
+  .put(requirePermission('faculty:manage'), updateFaculty)
+  .delete(requirePermission('faculty:manage'), deleteFaculty);
 
 // Students
 router.route('/students')
-  .get(getStudents)
-  .post(authorize('ADMIN'), createStudent);
+  .get(requireDepartmentScope(), getStudents)
+  .post(requirePermission('students:manage'), createStudent);
 router.route('/students/:id')
-  .put(authorize('ADMIN'), updateStudent)
-  .delete(authorize('ADMIN'), deleteStudent);
+  .put(requirePermission('students:manage'), updateStudent)
+  .delete(requirePermission('students:manage'), deleteStudent);
 
 // Subjects
 router.route('/subjects')
-  .get(getSubjects)
-  .post(authorize('ADMIN', 'HOD'), createSubject);
+  .get(requireDepartmentScope(), getSubjects)
+  .post(requireDepartmentScope(), createSubject);
 router.route('/subjects/:id')
-  .put(authorize('ADMIN', 'HOD'), updateSubject)
-  .delete(authorize('ADMIN', 'HOD'), deleteSubject);
+  .put(requireDepartmentScope(), updateSubject)
+  .delete(requireDepartmentScope(), deleteSubject);
 
 // Sections
 router.route('/sections')
-  .get(getSections)
-  .post(authorize('ADMIN', 'HOD'), createSection);
+  .get(requireDepartmentScope(), getSections)
+  .post(requireDepartmentScope(), createSection);
 router.route('/sections/:id')
-  .put(authorize('ADMIN', 'HOD'), updateSection)
-  .delete(authorize('ADMIN', 'HOD'), deleteSection);
+  .put(requireDepartmentScope(), updateSection)
+  .delete(requireDepartmentScope(), deleteSection);
 
 // Classrooms
 router.route('/classrooms')
   .get(getClassrooms)
-  .post(authorize('ADMIN'), createClassroom);
+  .post(requirePermission('classrooms:manage'), createClassroom);
 router.route('/classrooms/:id')
-  .put(authorize('ADMIN'), updateClassroom)
-  .delete(authorize('ADMIN'), deleteClassroom);
+  .put(requirePermission('classrooms:manage'), updateClassroom)
+  .delete(requirePermission('classrooms:manage'), deleteClassroom);
 
 // Laboratories
 router.route('/labs')
-  .get(getLaboratories)
-  .post(authorize('ADMIN'), createLaboratory);
+  .get(requireDepartmentScope(), getLaboratories)
+  .post(requirePermission('labs:manage'), createLaboratory);
 router.route('/labs/:id')
-  .put(authorize('ADMIN'), updateLaboratory)
-  .delete(authorize('ADMIN'), deleteLaboratory);
+  .put(requirePermission('labs:manage'), updateLaboratory)
+  .delete(requirePermission('labs:manage'), deleteLaboratory);
 
 module.exports = router;

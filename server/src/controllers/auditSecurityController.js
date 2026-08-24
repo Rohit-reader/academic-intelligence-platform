@@ -1,6 +1,7 @@
 const AuditLog = require('../models/AuditLog');
 const SecurityAlert = require('../models/SecurityAlert');
 const { checkAnomalies } = require('../services/anomalyDetector');
+const { PERMISSION_MATRIX } = require('../config/permissions');
 const { sendSuccess, sendError } = require('../utils/response');
 
 const getAuditLogs = async (req, res) => {
@@ -39,8 +40,22 @@ const resolveSecurityAlert = async (req, res) => {
   }
 };
 
+const getPermissionsMatrix = async (req, res) => {
+  try {
+    const detailedMatrix = Object.entries(PERMISSION_MATRIX).map(([role, permissions]) => ({
+      role,
+      permissions,
+      scope: role === 'ADMIN' ? 'Institution-Wide' : role === 'HOD' ? 'Assigned Department Only' : role === 'FACULTY' ? 'Assigned Classes & Self' : role === 'STUDENT' ? 'Enrolled Roster & Self' : 'Examination Data Only',
+    }));
+    return sendSuccess(res, detailedMatrix);
+  } catch (error) {
+    return sendError(res, error.message);
+  }
+};
+
 module.exports = {
   getAuditLogs,
   getSecurityAlerts,
   resolveSecurityAlert,
+  getPermissionsMatrix,
 };

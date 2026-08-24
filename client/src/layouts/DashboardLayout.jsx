@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard, Database, Calendar, UserCheck, Layers, TestTube,
-  FileCheck, ShieldAlert, LogOut, Bell, ChevronRight, Menu, X, GraduationCap
+  FileCheck, ShieldAlert, ShieldCheck, LogOut, Bell, ChevronRight, Menu, X, GraduationCap
 } from 'lucide-react';
 
 export const DashboardLayout = () => {
@@ -26,6 +26,7 @@ export const DashboardLayout = () => {
     { label: 'Examinations', path: '/exams', icon: FileCheck, roles: ['ADMIN', 'EXAM_CELL', 'STUDENT'] },
     { label: 'Events & Workshops', path: '/events', icon: TestTube, roles: ['ADMIN', 'HOD', 'FACULTY', 'STUDENT'] },
     { label: 'Security & Audits', path: '/security', icon: ShieldAlert, roles: ['ADMIN'] },
+    { label: 'Roles & Permissions', path: '/roles-permissions', icon: ShieldCheck, roles: ['ADMIN'] },
   ];
 
   const filteredNav = navItems.filter((item) => user && item.roles.includes(user.role));
