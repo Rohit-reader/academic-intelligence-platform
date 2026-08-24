@@ -1,14 +1,36 @@
 const Timetable = require('../models/Timetable');
 const TimetableEntry = require('../models/TimetableEntry');
+const AuditLog = require('../models/AuditLog');
 const { generateTimetableForDepartment } = require('../services/timetableEngine');
 const { detectConflicts } = require('../services/conflictDetector');
 const { sendSuccess, sendError } = require('../utils/response');
 const { logAudit } = require('../middleware/audit');
 
-// Get Timetable & Entries
+// Get Timetable & Entries (With Department-Scope Enforcement)
 const getTimetable = async (req, res) => {
   try {
-    const { department, semester, facultyId, sectionId } = req.query;
+    let { department, semester, facultyId, sectionId } = req.query;
+
+    // Enforce Scope: FACULTY and HOD CANNOT view another department's timetable
+    if (req.user.role === 'FACULTY' || req.user.role === 'HOD') {
+      const userDeptId = req.user.department?._id?.toString() || req.user.department?.toString();
+      if (userDeptId) {
+        if (department && department.toString() !== userDeptId) {
+          // Log security audit for attempted cross-department access
+          await AuditLog.create({
+            user: req.user._id,
+            userName: req.user.name,
+            userRole: req.user.role,
+            action: 'DEPARTMENT_SCOPE_DENIED',
+            entity: 'SECURITY',
+            details: `User attempted to view foreign department timetable '${department}' (User department: '${userDeptId}')`,
+            ipAddress: req.ip || '127.0.0.1',
+          });
+          return sendError(res, 'Forbidden: A department faculty or HOD cannot view another department\'s timetable', 403);
+        }
+        department = userDeptId;
+      }
+    }
 
     let query = {};
     if (department) query.department = department;
@@ -46,7 +68,16 @@ const getTimetable = async (req, res) => {
 // Generate Timetable (Rule-Based Engine)
 const generateTimetable = async (req, res) => {
   try {
-    const { department, semester, academicYear } = req.body;
+    let { department, semester, academicYear } = req.body;
+
+    // Enforce Scope: HOD cannot generate timetable for another department
+    if (req.user.role === 'HOD') {
+      const userDeptId = req.user.department?._id?.toString() || req.user.department?.toString();
+      if (userDeptId && department && department.toString() !== userDeptId) {
+        return sendError(res, 'Forbidden: You can only generate timetable for your own department', 403);
+      }
+      if (userDeptId) department = userDeptId;
+    }
 
     if (!department || !semester) {
       return sendError(res, 'Department and semester are required', 400);

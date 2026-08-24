@@ -57,11 +57,9 @@ export const Login = () => {
 
       <div className="w-full max-w-md bg-white border border-[#E2E8F0] rounded-2xl p-8 shadow-xl z-10">
         <div className="text-center mb-8">
-          <div className="inline-flex p-3.5 rounded-2xl bg-gradient-to-tr from-[#4F46E5] to-[#7C3AED] text-white mb-3 shadow-md shadow-indigo-500/20">
-            <GraduationCap className="w-7 h-7" />
-          </div>
-          <h1 className="text-2xl font-bold text-[#0F172A] tracking-tight">AcademiaOps</h1>
-          <p className="text-xs text-[#64748B] mt-1 font-medium">Academic Operations Manager</p>
+          <img src="/kec-logo.png" alt="KEC Logo" className="h-16 w-auto mx-auto mb-3 object-contain" />
+          <h1 className="text-2xl font-black text-[#0F172A] tracking-tight">KEC</h1>
+          <p className="text-xs text-[#4F46E5] mt-1 font-bold">Kongu Engineering College — Operations Platform</p>
         </div>
 
         {error && (

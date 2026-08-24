@@ -43,13 +43,11 @@ export const DashboardLayout = () => {
     <div className="flex h-screen bg-[#F8FAFC] text-[#0F172A] overflow-hidden font-sans">
       {/* Sidebar Desktop */}
       <aside className="hidden md:flex flex-col w-64 bg-white border-r border-[#E2E8F0]">
-        <div className="p-5 border-b border-[#E2E8F0] flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-[#4F46E5] to-[#7C3AED] flex items-center justify-center font-bold text-white shadow-md shadow-indigo-500/20">
-            <GraduationCap className="w-5 h-5 text-white" />
-          </div>
+        <div className="p-4 border-b border-[#E2E8F0] flex items-center gap-3">
+          <img src="/kec-logo.png" alt="KEC Logo" className="h-10 w-auto object-contain shrink-0" />
           <div>
-            <h1 className="font-bold text-[#0F172A] tracking-tight text-sm">AcademiaOps</h1>
-            <p className="text-[10px] text-[#7C3AED] font-semibold tracking-wide uppercase">Academic Operations</p>
+            <h1 className="font-extrabold text-[#0F172A] tracking-tight text-sm">KEC</h1>
+            <p className="text-[10px] text-[#4F46E5] font-bold tracking-wide uppercase">Kongu Engineering</p>
           </div>
         </div>
 
@@ -121,7 +119,7 @@ export const DashboardLayout = () => {
           <div className="flex items-center gap-4">
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#F8FAFC] border border-[#E2E8F0] text-xs">
               <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse"></span>
-              <span className="text-[#0F172A] font-semibold">{user?.department?.name || 'Central University'}</span>
+              <span className="text-[#0F172A] font-extrabold">KEC — {user?.department?.name || 'Kongu Engineering College'}</span>
             </div>
 
             <button className="p-2 text-[#64748B] hover:text-[#0F172A] rounded-xl hover:bg-[#F1F5F9] relative transition">

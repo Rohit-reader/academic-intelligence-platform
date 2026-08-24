@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { fetchAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { Calendar, Play, AlertTriangle, CheckCircle, Filter, BookOpen } from 'lucide-react';
 
 export const Timetable = () => {
+  const { user } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -20,12 +22,21 @@ export const Timetable = () => {
     { start: '15:00', end: '16:00' },
   ];
 
+  const userDeptId = user?.department?._id || user?.department;
+  const isDeptRestricted = (user?.role === 'FACULTY' || user?.role === 'HOD') && userDeptId;
+
   const loadDepartments = async () => {
     try {
       const res = await fetchAPI('/master/departments');
       if (res.success && res.data.length > 0) {
-        setDepartments(res.data);
-        setSelectedDept(res.data[0]._id);
+        if (isDeptRestricted) {
+          const filtered = res.data.filter((d) => d._id === userDeptId.toString());
+          setDepartments(filtered.length > 0 ? filtered : res.data);
+          setSelectedDept(userDeptId.toString());
+        } else {
+          setDepartments(res.data);
+          setSelectedDept(res.data[0]._id);
+        }
       }
     } catch (err) {
       console.error('Failed to load departments:', err);
@@ -60,10 +71,10 @@ export const Timetable = () => {
     try {
       const res = await fetchAPI('/timetable/generate', {
         method: 'POST',
-        body: { department: selectedDept, semester: Number(selectedSem), academicYear: '2025-2026' },
+        body: { department: selectedDept, semester: selectedSem, academicYear: '2025-2026' },
       });
       if (res.success) {
-        alert(`Timetable generated cleanly with ${res.data.entriesCount} entries!`);
+        alert('Timetable generated cleanly using rule engine!');
         loadTimetable();
       }
     } catch (err) {
@@ -73,133 +84,152 @@ export const Timetable = () => {
     }
   };
 
-  const entries = data?.entries || [];
-  const conflicts = data?.conflicts || [];
-
   return (
     <div className="space-y-6">
+      {/* Top Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-[#0F172A] tracking-tight">Constraint-Based Timetable Engine</h2>
-          <p className="text-xs text-[#64748B] mt-0.5 font-medium">View master schedules, trigger automated constraint checking, and inspect double bookings.</p>
+          <h2 className="text-xl font-bold text-[#0F172A] tracking-tight">KEC Timetable Matrix & Constraint Engine</h2>
+          <p className="text-xs text-[#64748B] mt-0.5 font-medium">
+            {isDeptRestricted
+              ? `Assigned Department Timetable Scope: ${departments[0]?.name || 'My Department'}`
+              : 'Inspect weekly master schedules, detect hard/soft conflicts, and execute rule-based auto-generation.'}
+          </p>
         </div>
 
-        <button
-          onClick={handleGenerate}
-          disabled={generating}
-          className="px-4 py-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-xl text-xs font-semibold shadow-md shadow-indigo-500/20 flex items-center gap-2 self-start disabled:opacity-50"
-        >
-          <Play className="w-4 h-4 fill-white" /> {generating ? 'Evaluating Constraints...' : 'Auto-Generate Timetable'}
-        </button>
-      </div>
-
-      {/* Filter Bar */}
-      <div className="saas-card p-4 flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-2 text-xs font-bold text-[#0F172A]">
-          <Filter className="w-4 h-4 text-[#4F46E5]" /> Filter Schedule:
-        </div>
-
-        <select
-          value={selectedDept}
-          onChange={(e) => setSelectedDept(e.target.value)}
-          className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-3.5 py-1.5 text-xs text-[#0F172A] font-medium focus:outline-none"
-        >
-          {departments.map((d) => (
-            <option key={d._id} value={d._id}>{d.name} ({d.code})</option>
-          ))}
-        </select>
-
-        <select
-          value={selectedSem}
-          onChange={(e) => setSelectedSem(e.target.value)}
-          className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-3.5 py-1.5 text-xs text-[#0F172A] font-medium focus:outline-none"
-        >
-          {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
-            <option key={s} value={s}>Semester {s}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* Conflict Inspector Banner */}
-      <div className="saas-card p-5">
-        <h3 className="text-xs font-bold text-[#64748B] uppercase tracking-wider mb-2">Rule & Constraint Evaluation Report</h3>
-
-        {conflicts.length === 0 ? (
-          <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 font-medium flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 shrink-0 text-[#10B981]" />
-            <span>Zero hard conflicts detected. All faculty, room, section, and laboratory constraints satisfied.</span>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {conflicts.map((c, idx) => (
-              <div key={idx} className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-[#F43F5E]" />
-                <div>
-                  <span className="font-bold uppercase tracking-wider text-[10px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 mr-2">
-                    {c.severity}
-                  </span>
-                  <span>{c.message}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+        {(user?.role === 'ADMIN' || user?.role === 'HOD') && (
+          <button
+            onClick={handleGenerate}
+            disabled={generating}
+            className="px-4 py-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-xl text-xs font-semibold shadow-md shadow-indigo-500/20 flex items-center gap-2 self-start"
+          >
+            <Play className="w-4 h-4 fill-white" /> {generating ? 'Generating Schedule...' : 'Auto-Generate Timetable'}
+          </button>
         )}
       </div>
 
-      {/* Timetable Matrix Grid */}
-      <div className="saas-card p-6 overflow-x-auto">
-        <h3 className="text-sm font-bold text-[#0F172A] mb-4 flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-[#4F46E5]" /> Weekly Class Grid
+      {/* Selectors Bar */}
+      <div className="saas-card p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-4 w-full sm:w-auto">
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-[#64748B]" />
+            <span className="text-xs font-bold text-[#0F172A]">Department:</span>
+          </div>
+          <select
+            value={selectedDept}
+            disabled={isDeptRestricted}
+            onChange={(e) => setSelectedDept(e.target.value)}
+            className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-3.5 py-1.5 text-xs text-[#0F172A] font-medium focus:outline-none disabled:opacity-75 disabled:cursor-not-allowed"
+          >
+            {departments.map((d) => (
+              <option key={d._id} value={d._id}>{d.name} ({d.code})</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex items-center gap-4 w-full sm:w-auto">
+          <span className="text-xs font-bold text-[#0F172A]">Semester:</span>
+          <div className="flex items-center gap-1">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
+              <button
+                key={sem}
+                onClick={() => setSelectedSem(sem)}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
+                  selectedSem === sem
+                    ? 'bg-[#4F46E5] text-white shadow-2xs'
+                    : 'bg-[#F8FAFC] text-[#64748B] hover:text-[#0F172A] border border-[#E2E8F0]'
+                }`}
+              >
+                S{sem}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Conflicts Status Banner */}
+      {data?.conflicts && data.conflicts.length > 0 && (
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-900 space-y-2">
+          <div className="flex items-center gap-2 font-bold text-[#F43F5E]">
+            <AlertTriangle className="w-4 h-4" /> Hard Conflicts Detected ({data.conflicts.length})
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[11px]">
+            {data.conflicts.map((c, idx) => (
+              <div key={idx} className="p-2.5 rounded-xl bg-white border border-rose-200 shadow-2xs">
+                <span className="font-bold text-[#F43F5E] block">{c.type}</span>
+                <span className="text-[#64748B]">{c.message}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Weekly Matrix Grid */}
+      <div className="saas-card p-6 space-y-4">
+        <h3 className="text-sm font-bold text-[#0F172A] flex items-center justify-between">
+          <span>Weekly Academic Timetable Matrix</span>
+          <span className="text-xs text-[#10B981] font-bold font-mono">
+            {data?.entries?.length || 0} Scheduled Periods
+          </span>
         </h3>
 
         {loading ? (
-          <div className="p-8 text-center text-[#64748B] text-xs">Loading timetable matrix...</div>
+          <div className="p-8 text-center text-[#64748B] text-xs">Loading Timetable Matrix...</div>
+        ) : !data?.entries || data.entries.length === 0 ? (
+          <div className="p-8 text-center text-[#64748B] text-xs">
+            No active timetable entries found for this department & semester. Click "Auto-Generate Timetable" to create a schedule!
+          </div>
         ) : (
-          <table className="w-full text-left text-xs border-collapse min-w-[700px]">
-            <thead>
-              <tr className="border-b border-[#E2E8F0] text-[#64748B] font-bold bg-[#F8FAFC]">
-                <th className="py-3 px-3.5 w-28 rounded-l-xl">Time Slot</th>
-                {days.map((day) => (
-                  <th key={day} className="py-3 px-3.5 text-center">{day}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#E2E8F0]">
-              {timeSlots.map((slot) => (
-                <tr key={`${slot.start}-${slot.end}`}>
-                  <td className="py-3 px-3.5 font-mono text-[11px] text-[#4F46E5] font-bold bg-[#F8FAFC]">
-                    {slot.start} - {slot.end}
-                  </td>
-                  {days.map((day) => {
-                    const matched = entries.filter((e) => e.dayOfWeek === day && e.startTime === slot.start);
-                    return (
-                      <td key={day} className="p-2 align-top text-center border-l border-[#E2E8F0] min-h-[80px]">
-                        {matched.map((e) => (
-                          <div
-                            key={e._id}
-                            className={`p-3 rounded-xl text-left mb-1.5 border shadow-2xs ${
-                              e.isLabSession
-                                ? 'bg-purple-50 border-purple-200 text-purple-900'
-                                : 'bg-white border-[#E2E8F0] text-[#0F172A]'
-                            }`}
-                          >
-                            <p className="font-bold text-xs truncate flex items-center gap-1">
-                              <BookOpen className="w-3.5 h-3.5 text-[#4F46E5] shrink-0" /> {e.subject?.code || 'SUB'}
-                            </p>
-                            <p className="text-[11px] text-[#64748B] font-medium truncate mt-0.5">Sec: {e.section?.name || 'All'}</p>
-                            <p className="text-[11px] text-[#64748B] truncate">Fac: {e.faculty?.user?.name || 'Prof'}</p>
-                            <span className="inline-block mt-1.5 text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#10B981]">
-                              {e.isLabSession ? (e.laboratory?.roomNumber || 'Lab') : (e.classroom?.roomNumber || 'Room')}
-                            </span>
-                          </div>
-                        ))}
-                      </td>
-                    );
-                  })}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse min-w-[700px]">
+              <thead>
+                <tr className="border-b border-[#E2E8F0] text-[#64748B] font-bold bg-[#F8FAFC]">
+                  <th className="py-3 px-3.5 rounded-l-xl w-32">Time Slot</th>
+                  {days.map((d) => (
+                    <th key={d} className="py-3 px-3.5">{d}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-[#E2E8F0] text-[#0F172A]">
+                {timeSlots.map((slot) => (
+                  <tr key={`${slot.start}-${slot.end}`} className="hover:bg-[#F8FAFC]">
+                    <td className="py-3 px-3.5 font-mono text-[#64748B] font-bold bg-[#F8FAFC]">
+                      {slot.start} - {slot.end}
+                    </td>
+
+                    {days.map((day) => {
+                      const entry = data.entries.find(
+                        (e) => e.day === day && e.startTime === slot.start
+                      );
+
+                      return (
+                        <td key={day} className="py-3 px-3.5 align-top">
+                          {entry ? (
+                            <div className="p-2.5 rounded-xl bg-indigo-50/70 border border-indigo-200/80 space-y-1 shadow-2xs">
+                              <p className="font-bold text-xs text-[#0F172A]">{entry.subject?.name || 'Subject'}</p>
+                              <p className="text-[10px] text-[#4F46E5] font-semibold">
+                                {entry.faculty?.user?.name || 'Faculty Member'}
+                              </p>
+                              <div className="flex items-center justify-between text-[10px] text-[#64748B] pt-1 border-t border-indigo-100 font-mono">
+                                <span>{entry.section?.name || 'Sec'}</span>
+                                <span className="font-bold text-[#7C3AED]">
+                                  {entry.classroom?.roomNumber || entry.laboratory?.roomNumber || 'Room'}
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="h-16 rounded-xl border border-dashed border-[#E2E8F0] flex items-center justify-center text-[10px] text-[#CBD5E1]">
+                              Free Slot
+                            </div>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>
