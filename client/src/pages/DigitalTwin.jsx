@@ -2,11 +2,41 @@ import React, { useState, useEffect } from 'react';
 import { fetchAPI } from '../services/api';
 import { Layers, Play, CheckCircle } from 'lucide-react';
 
+import { RippleEffectAnalyzerModal } from '../components/RippleEffectAnalyzerModal';
+import { Sliders } from 'lucide-react';
+
 export const DigitalTwin = () => {
   const [simulations, setSimulations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [faculties, setFaculties] = useState([]);
   const [classrooms, setClassrooms] = useState([]);
+
+  // Ripple Analysis State
+  const [rippleData, setRippleData] = useState(null);
+  const [analyzingRipple, setAnalyzingRipple] = useState(false);
+
+  const handleRunRippleAnalysis = async () => {
+    setAnalyzingRipple(true);
+    try {
+      const res = await fetchAPI('/ripple/analyze', {
+        method: 'POST',
+        body: {
+          resourceType: selectedRooms.length > 0 ? 'CLASSROOM' : selectedFaculties.length > 0 ? 'FACULTY' : 'CLASSROOM',
+          resourceId: selectedRooms[0] || selectedFaculties[0] || '123',
+          resourceName: 'Room 301',
+          changeType: 'MAINTENANCE',
+          day: 'Wednesday',
+          startTime: '10:00',
+          endTime: '16:00',
+        },
+      });
+      if (res.success) setRippleData(res.data);
+    } catch (err) {
+      alert(err.message || 'Ripple Analysis failed');
+    } finally {
+      setAnalyzingRipple(false);
+    }
+  };
 
   // Form states
   const [simName, setSimName] = useState('');
@@ -155,7 +185,16 @@ export const DigitalTwin = () => {
             </div>
           </div>
 
-          <div className="flex justify-end pt-2">
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={handleRunRippleAnalysis}
+              disabled={analyzingRipple}
+              className="px-4 py-2.5 bg-purple-50 hover:bg-purple-100 text-[#7C3AED] border border-purple-200 rounded-xl text-xs font-bold flex items-center gap-2"
+            >
+              <Sliders className="w-4 h-4" /> {analyzingRipple ? 'Analyzing Ripple Effect...' : 'Run Smart Ripple-Effect Analysis'}
+            </button>
+
             <button
               type="submit"
               disabled={running}
@@ -238,6 +277,15 @@ export const DigitalTwin = () => {
           </div>
         )}
       </div>
+
+      {/* Ripple Effect Impact Analyzer Modal */}
+      {rippleData && (
+        <RippleEffectAnalyzerModal
+          analysisData={rippleData}
+          onClose={() => setRippleData(null)}
+          onApplySuccess={() => loadInitialData()}
+        />
+      )}
     </div>
   );
 };

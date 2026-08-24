@@ -5,11 +5,41 @@ import {
   Search, Plus, Edit2, Trash2, X
 } from 'lucide-react';
 
+import { RippleEffectAnalyzerModal } from '../components/RippleEffectAnalyzerModal';
+import { Sliders } from 'lucide-react';
+
 export const MasterData = () => {
   const [activeTab, setActiveTab] = useState('departments');
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+
+  // Ripple Analysis State
+  const [rippleData, setRippleData] = useState(null);
+  const [analyzingRipple, setAnalyzingRipple] = useState(false);
+
+  const handleRunImpactAnalysis = async (item = null) => {
+    setAnalyzingRipple(true);
+    try {
+      const res = await fetchAPI('/ripple/analyze', {
+        method: 'POST',
+        body: {
+          resourceType: activeTab === 'classrooms' || activeTab === 'labs' ? 'CLASSROOM' : activeTab === 'faculty' ? 'FACULTY' : 'SECTION',
+          resourceId: item?._id || data[0]?._id || '123',
+          resourceName: item?.roomNumber || item?.name || item?.user?.name || 'Academic Resource',
+          changeType: 'UNAVAILABLE',
+          day: 'Wednesday',
+          startTime: '10:00',
+          endTime: '16:00',
+        },
+      });
+      if (res.success) setRippleData(res.data);
+    } catch (err) {
+      alert(err.message || 'Impact analysis failed');
+    } finally {
+      setAnalyzingRipple(false);
+    }
+  };
 
   // Auxiliary data for dropdown selects
   const [departmentsList, setDepartmentsList] = useState([]);
@@ -146,12 +176,21 @@ export const MasterData = () => {
           <h2 className="text-xl font-bold text-[#0F172A] tracking-tight">Academic Master Data Store</h2>
           <p className="text-xs text-[#64748B] mt-0.5 font-medium">Full CRUD operations for departments, staff, students, subjects, sections, classrooms, and labs.</p>
         </div>
-        <button
-          onClick={handleOpenAddModal}
-          className="px-4 py-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 flex items-center gap-2 self-start"
-        >
-          <Plus className="w-4 h-4" /> Add New {currentTabObj.singular}
-        </button>
+        <div className="flex items-center gap-2 self-start">
+          <button
+            onClick={() => handleRunImpactAnalysis()}
+            disabled={analyzingRipple}
+            className="px-3.5 py-2 bg-purple-50 hover:bg-purple-100 text-[#7C3AED] border border-purple-200 rounded-xl text-xs font-bold flex items-center gap-2"
+          >
+            <Sliders className="w-4 h-4" /> {analyzingRipple ? 'Analyzing...' : 'Run Impact Analysis'}
+          </button>
+          <button
+            onClick={handleOpenAddModal}
+            className="px-4 py-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" /> Add New {currentTabObj.singular}
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -827,6 +866,15 @@ export const MasterData = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Ripple Effect Impact Analyzer Modal */}
+      {rippleData && (
+        <RippleEffectAnalyzerModal
+          analysisData={rippleData}
+          onClose={() => setRippleData(null)}
+          onApplySuccess={() => loadData()}
+        />
       )}
     </div>
   );

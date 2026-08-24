@@ -3,10 +3,38 @@ import { fetchAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { UserCheck, CheckCircle2, XCircle, Sliders } from 'lucide-react';
 
+import { RippleEffectAnalyzerModal } from '../components/RippleEffectAnalyzerModal';
+
 export const LeaveManagement = () => {
   const { user } = useAuth();
   const [leaves, setLeaves] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Ripple Analysis State
+  const [rippleData, setRippleData] = useState(null);
+  const [analyzingRipple, setAnalyzingRipple] = useState(false);
+
+  const handleRunImpactAnalysis = async (facName = 'Faculty Member') => {
+    setAnalyzingRipple(true);
+    try {
+      const res = await fetchAPI('/ripple/analyze', {
+        method: 'POST',
+        body: {
+          resourceType: 'FACULTY',
+          resourceName: facName,
+          changeType: 'LEAVE',
+          day: 'Wednesday',
+          startTime: '10:00',
+          endTime: '16:00',
+        },
+      });
+      if (res.success) setRippleData(res.data);
+    } catch (err) {
+      alert(err.message || 'Impact analysis failed');
+    } finally {
+      setAnalyzingRipple(false);
+    }
+  };
 
   // Form states
   const [startDate, setStartDate] = useState('');
@@ -200,6 +228,14 @@ export const LeaveManagement = () => {
                   {leave.status === 'PENDING' && (user?.role === 'HOD' || user?.role === 'ADMIN') && (
                     <div className="flex items-center justify-end gap-2 pt-2">
                       <button
+                        type="button"
+                        onClick={() => handleRunImpactAnalysis(leave.faculty?.user?.name)}
+                        className="px-3.5 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-[#7C3AED] border border-purple-200 text-xs font-bold flex items-center gap-1.5"
+                      >
+                        <Sliders className="w-3.5 h-3.5" /> Impact Analysis
+                      </button>
+
+                      <button
                         onClick={() => handleReview(leave._id, 'REJECTED')}
                         className="px-3.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-[#F43F5E] border border-rose-200 text-xs font-bold flex items-center gap-1.5"
                       >
@@ -226,6 +262,15 @@ export const LeaveManagement = () => {
           </div>
         )}
       </div>
+
+      {/* Ripple Effect Impact Analyzer Modal */}
+      {rippleData && (
+        <RippleEffectAnalyzerModal
+          analysisData={rippleData}
+          onClose={() => setRippleData(null)}
+          onApplySuccess={() => loadLeaves()}
+        />
+      )}
     </div>
   );
 };

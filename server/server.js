@@ -37,7 +37,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Health Check
 app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'OK', message: 'Academic Intelligence API Operational', timestamp: new Date() });
+  res.status(200).json({ status: 'OK', message: 'Academic Operations API Operational', timestamp: new Date() });
 });
 
 // Route Modules
@@ -47,6 +47,7 @@ app.use('/api/timetable', require('./src/routes/timetableRoutes'));
 app.use('/api/leaves', require('./src/routes/leaveRoutes'));
 app.use('/api/recommendations', require('./src/routes/recommendationRoutes'));
 app.use('/api/simulations', require('./src/routes/simulationRoutes'));
+app.use('/api/ripple', require('./src/routes/rippleRoutes'));
 app.use('/api/exams', require('./src/routes/examRoutes'));
 app.use('/api/events', require('./src/routes/eventRoutes'));
 app.use('/api/system', require('./src/routes/auditSecurityRoutes'));
