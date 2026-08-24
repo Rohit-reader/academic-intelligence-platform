@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { fetchAPI } from '../../services/api';
-import { FileCheck, DoorClosed, Users, Plus } from 'lucide-react';
+import { FileCheck, DoorClosed, Users, Plus, ArrowUpRight, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
 export const ExamCellDashboard = () => {
   const [stats, setStats] = useState(null);
@@ -27,6 +28,17 @@ export const ExamCellDashboard = () => {
 
   const exams = stats?.upcomingExams || [];
 
+  const examSeatingGraph = exams.map((ex) => ({
+    name: ex.name?.split(' ')[0] || 'Exam',
+    students: ex.totalStudents || 40,
+  }));
+
+  const quickAccessExam = [
+    { title: 'Schedule New Exam', desc: 'Add Date, Time & Enrolled Count', path: '/exams', icon: Plus, color: 'text-[#4F46E5] bg-indigo-50 border-indigo-200' },
+    { title: 'Classroom & Seating Master', desc: 'Inspect Room Seating Capacities', path: '/master-data', icon: DoorClosed, color: 'text-[#10B981] bg-emerald-50 border-emerald-200' },
+    { title: 'Digital Twin Exam Simulation', desc: 'Test Room Allocations & Blocks', path: '/digital-twin', icon: Calendar, color: 'text-[#7C3AED] bg-purple-50 border-purple-200' },
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -40,6 +52,31 @@ export const ExamCellDashboard = () => {
         >
           <Plus className="w-4 h-4" /> Schedule New Exam
         </Link>
+      </div>
+
+      {/* Quick Access Shortcuts */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {quickAccessExam.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.title}
+              to={item.path}
+              className="saas-card p-4 hover:border-[#4F46E5] transition group flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3">
+                <div className={`p-2.5 rounded-xl border ${item.color}`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-[#0F172A] group-hover:text-[#4F46E5] transition">{item.title}</h4>
+                  <p className="text-[10px] text-[#64748B] font-medium">{item.desc}</p>
+                </div>
+              </div>
+              <ArrowUpRight className="w-4 h-4 text-[#64748B] group-hover:text-[#4F46E5] transition" />
+            </Link>
+          );
+        })}
       </div>
 
       {/* Metrics */}
@@ -75,6 +112,24 @@ export const ExamCellDashboard = () => {
         </div>
       </div>
 
+      {/* Dynamic Graph */}
+      {examSeatingGraph.length > 0 && (
+        <div className="saas-card p-6 space-y-4">
+          <h3 className="text-sm font-bold text-[#0F172A]">Scheduled Examination Student Enrollment Breakdown</h3>
+          <div className="h-56 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={examSeatingGraph} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748B' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: '#64748B' }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={{ backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #E2E8F0', fontSize: '12px' }} />
+                <Bar dataKey="students" name="Enrolled Students" fill="#F59E0B" radius={[6, 6, 0, 0]} barSize={40} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
       {/* Upcoming Exams Table */}
       <div className="saas-card p-6 space-y-4">
         <h3 className="text-sm font-bold text-[#0F172A]">Scheduled Examination Roster</h3>
@@ -102,8 +157,8 @@ export const ExamCellDashboard = () => {
                   <td className="py-3 px-3.5 font-mono text-[11px]">{ex.startTime} - {ex.endTime}</td>
                   <td className="py-3 px-3.5 font-bold text-[#0F172A]">{ex.totalStudents}</td>
                   <td className="py-3 px-3.5">
-                    <span className="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-50 text-[#F59E0B] border border-amber-200">
-                      {ex.status}
+                    <span className="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-50 text-[#F59E0B] border border-amber-200 capitalize">
+                      {ex.status?.replace(/_/g, ' ')}
                     </span>
                   </td>
                 </tr>

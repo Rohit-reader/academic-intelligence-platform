@@ -46,9 +46,9 @@ export const Security = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-[#0F172A] tracking-tight flex items-center gap-2">
-            <ShieldAlert className="w-5 h-5 text-[#F43F5E]" /> Security Operations & Rule-Based Anomaly Detection
+            <ShieldAlert className="w-5 h-5 text-[#F43F5E]" /> Security Operations & Rule Anomaly Detection
           </h2>
-          <p className="text-xs text-[#64748B] mt-0.5 font-medium">Monitor system audit logs, automated rule-based security anomaly scanners, and unauthorized action attempts.</p>
+          <p className="text-xs text-[#64748B] mt-0.5 font-medium">Monitor system audit logs, automated rule security anomaly scanners, and unauthorized action attempts.</p>
         </div>
 
         <button
@@ -88,7 +88,7 @@ export const Security = () => {
                   <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-[#F43F5E]" />
                   <div className="space-y-0.5 text-xs">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-[#0F172A]">{al.alertType}</span>
+                      <span className="font-bold text-[#0F172A] capitalize">{al.alertType?.replace(/_/g, ' ')}</span>
                       <span className="px-2 py-0.5 text-[9px] font-bold rounded-full bg-rose-100 text-[#F43F5E] uppercase border border-rose-200">
                         {al.severity}
                       </span>
@@ -141,11 +141,11 @@ export const Security = () => {
                     </td>
                     <td className="py-3 px-3.5 font-bold text-[#0F172A]">{log.userName}</td>
                     <td className="py-3 px-3.5">
-                      <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-slate-100 border border-[#E2E8F0] text-[#64748B]">
-                        {log.userRole}
+                      <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-slate-100 border border-[#E2E8F0] text-[#64748B] capitalize">
+                        {log.userRole?.replace(/_/g, ' ')}
                       </span>
                     </td>
-                    <td className="py-3 px-3.5 font-mono font-bold text-[#4F46E5]">{log.action}</td>
+                    <td className="py-3 px-3.5 font-mono font-bold text-[#4F46E5] capitalize">{log.action?.replace(/_/g, ' ')}</td>
                     <td className="py-3 px-3.5 font-mono text-[#64748B] text-[11px]">{log.ipAddress}</td>
                     <td className="py-3 px-3.5 text-[#64748B] truncate max-w-xs">{log.details}</td>
                   </tr>
